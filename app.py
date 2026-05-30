@@ -10,7 +10,9 @@ from matplotlib.patches import Rectangle, Polygon, Circle
 st.set_page_config(page_title="Drone Drop Simulator", layout="wide")
 
 # Load Model
-model = joblib.load('drone_drift_model.pkl')
+model = joblib.load('drone_model.pkl')
+scaler = joblib.load('scaler.pkl')
+poly = joblib.load('poly_transformer.pkl')
 
 st.title("🛸 Autonomous Drone Supply Drop Simulator")
 st.markdown("ML-Powered Prediction: Watch the drone drop supplies to the predicted target!")
@@ -26,14 +28,23 @@ wind_factor = st.sidebar.slider("Wind Factor", 0.5, 2.0, 1.0, step=0.1)
 g = 9.81
 physics_drift = gs * np.sqrt((2 * alt) / g)
 
-# ML Prediction
+# ML Prediction (✅ SGD + Ridge with Polynomial Features)
 try:
-    poly_features = np.array([[alt, gs, payload, alt**2, alt*gs, alt*payload, gs**2, gs*payload, payload**2]])
-    ml_drift = model.predict(poly_features)[0]
+    # Step 1: Scale features
+    X_input = np.array([[alt, gs, payload]])
+    X_scaled = scaler.transform(X_input)
+    
+    # Step 2: Apply polynomial features
+    X_poly = poly.transform(X_scaled)
+    
+    # Step 3: Predict with Ridge model
+    ml_drift = model.predict(X_poly)[0]
     ml_drift_adjusted = ml_drift * wind_factor
-except:
+except Exception as e:
+    # Fallback to physics if model fails
     ml_drift = physics_drift * 1.15
     ml_drift_adjusted = ml_drift * wind_factor
+    st.warning(f"⚠️ Using physics fallback: {str(e)}")
 
 # Fall time calculation
 fall_time = np.sqrt((2 * alt) / g)
