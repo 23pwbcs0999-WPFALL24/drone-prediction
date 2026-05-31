@@ -69,8 +69,9 @@ with col2:
     if gs > 0:
         # Time to reach ground using physics: t = sqrt(2h/g)
         t_total = np.sqrt((2 * alt) / g)
-        # Scale x-axis by ratio of ML vs physics distance
-        y_ml = alt - 0.5 * g * (x_ml / ml_prediction * gs * t_total)**2
+        # ML trajectory uses same fall time, but reaches different horizontal distance
+        # This represents different air resistance/wind effects that ML learned
+        y_ml = alt - 0.5 * g * (x_ml / ml_prediction * t_total)**2
     else:
         y_ml = np.linspace(alt, 0, 100)
     ax.plot(x_ml, y_ml, 'g-', linewidth=2, label='ML Predicted Path')
