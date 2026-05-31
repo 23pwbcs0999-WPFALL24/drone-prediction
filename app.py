@@ -9,7 +9,7 @@ st.set_page_config(page_title="Drone Drift Showdown", layout="wide")
 
 # Load Model and Preprocessing objects
 # We use the Ridge model with Polynomial Features from Step 3/5
-model = joblib.load('final_drone_model.pkl')
+model = joblib.load('drone_drift_model.pkl')
 # Since we didn't save the scaler/poly objects to disk in previous cells,
 # we'll use the ones in memory if possible, but for a standalone app file,
 # it's best to define the math or reload them.
