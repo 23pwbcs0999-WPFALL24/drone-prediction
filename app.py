@@ -113,10 +113,16 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Load Model
-model = joblib.load('drone_model.pkl')
-scaler = joblib.load('scaler.pkl')
-poly = joblib.load('poly_transformer.pkl')
+# Load ML Components with Caching (efficient resource management)
+@st.cache_resource
+def load_ml_components():
+    """Load model, scaler, and transformer into memory once at app startup."""
+    m = joblib.load('drone_model.pkl')
+    s = joblib.load('scaler.pkl')
+    p = joblib.load('poly_transformer.pkl')
+    return m, s, p
+
+model, scaler, poly = load_ml_components()
 
 # Professional Header
 st.markdown("""
@@ -158,8 +164,8 @@ physics_drift = gs * np.sqrt((2 * alt) / g)
 
 # ML Prediction (✅ SGD + Ridge with Polynomial Features)
 try:
-    # Step 1: Scale features
-    X_input = np.array([[alt, gs, payload]])
+    # Step 1: Scale features (use DataFrame to avoid sklearn warnings)
+    X_input = pd.DataFrame([[alt, gs, payload]], columns=['alt', 'gs', 'payload_mass'])
     X_scaled = scaler.transform(X_input)
     
     # Step 2: Apply polynomial features
@@ -258,7 +264,8 @@ with col1:
                 fontsize=14, fontweight='bold', color='#333', pad=15)
     ax.legend(loc='upper right', fontsize=11, framealpha=0.95, edgecolor='#ccc', fancybox=True, shadow=True)
     ax.grid(True, alpha=0.25, linestyle='--', linewidth=0.7)
-    ax.set_aspect('equal', adjustable='box')
+    # Dynamic aspect ratio for better visualization (altitude vs distance can vary greatly)
+    # ax.set_aspect('equal', adjustable='box')  # Removed: causes vertical squishing on varied scales
     
     # Spine styling
     for spine in ax.spines.values():
@@ -331,6 +338,7 @@ with col2:
     <table style="width: 100%; font-size: 0.9em;">
     <tr><td>Raw ML Prediction</td><td style="text-align: right;"><strong>{ml_drift:.2f}m</strong></td></tr>
     <tr><td>Wind Factor Applied</td><td style="text-align: right;"><strong>{wind_factor:.2f}x</strong></td></tr>
+    <tr><td style="color: #666; font-size: 0.85em;"><em>Wind multiplier accounts for real-world environmental conditions outside the core ML model</em></td></tr>
     <tr style="border-top: 2px solid #d4d4d4;"><td><strong>Final ML Prediction</strong></td><td style="text-align: right;"><strong style="font-size: 1.1em; color: #10b981;">{ml_drift_adjusted:.2f}m</strong></td></tr>
     <tr><td colspan="2"><em>← Recommended for targeting</em></td></tr>
     </table>
