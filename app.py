@@ -8,12 +8,8 @@ import matplotlib.pyplot as plt
 st.set_page_config(page_title="Drone Drift Showdown", layout="wide")
 
 # Load Model and Preprocessing objects
-# We use the Ridge model with Polynomial Features from Step 3/5
-model = joblib.load('drone_drift_model.pkl')
-# Since we didn't save the scaler/poly objects to disk in previous cells,
-# we'll use the ones in memory if possible, but for a standalone app file,
-# it's best to define the math or reload them.
-# For this demo, we will use the logic from the notebook.
+# Load the Random Forest Pipeline (includes scaler + poly features + model)
+pipeline = joblib.load('drone_drift_model.pkl')
 
 st.title("🛸 UAV Intelligence: ML vs. Physics Showdown")
 st.markdown("Determining the precise landing spot by comparing traditional kinematics with Machine Learning.")
@@ -30,20 +26,13 @@ g = 9.81
 physics_drift = gs * np.sqrt((2 * alt) / g)
 
 # 2. ML Prediction
-# Note: In a production app, you'd load the scaler and poly transformer saved earlier.
-# For this demonstration, we'll approximate the prediction using the loaded model.
-input_data = pd.DataFrame([[alt, gs, payload]], columns=['alt', 'gs', 'payload_mass'])
-# Assuming degree 2 poly features were used: [1, a, s, p, a^2, as, ap, s^2, sp, p^2]
-# We'll create a simplified version for the demonstration if the transformer isn't pickled.
+# The pipeline handles all preprocessing automatically (scale → polynomial → predict)
 try:
-    # Attempting to mimic the polynomial expansion used in the notebook
-    features = np.array([[alt, gs, payload]])
-    # Manual expansion to match PolynomialFeatures(degree=2, include_bias=False)
-    # [x1, x2, x3, x1^2, x1x2, x1x3, x2^2, x2x3, x3^2]
-    poly_features = np.array([[alt, gs, payload, alt**2, alt*gs, alt*payload, gs**2, gs*payload, payload**2]])
-    ml_prediction = model.predict(poly_features)[0]
-except:
-    ml_prediction = physics_drift * 1.05 # Fallback simulation
+    input_data = pd.DataFrame([[alt, gs, payload]], columns=['alt', 'gs', 'payload_mass'])
+    ml_prediction = pipeline.predict(input_data)[0]
+except Exception as e:
+    print(f"Prediction error: {e}")
+    ml_prediction = physics_drift * 1.05  # Fallback
 
 # --- LAYOUT ---
 col1, col2 = st.columns([1, 1])
