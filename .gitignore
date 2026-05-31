@@ -1,6 +1,6 @@
 # Large data files
 *.csv
-*.pkl
+
 *.h5
 
 # Python
