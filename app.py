@@ -47,7 +47,7 @@ with col1:
     kpi1.metric("Physics Estimate", f"{physics_drift:.2f} m", delta="Theoretical")
     kpi2.metric("ML Prediction", f"{ml_prediction:.2f} m", f"{ml_prediction - physics_drift:.2f} m vs Physics")
 
-    st.info(f"**Insight:** The ML model accounts for non-linear drift factors (Lecture #08) that basic physics formulas often miss.")
+    st.info(f"**Insight:** The ML model accounts for non-linear drift factors that basic physics formulas often miss.")
 
 with col2:
     st.subheader("📍 Impact Visualization")
